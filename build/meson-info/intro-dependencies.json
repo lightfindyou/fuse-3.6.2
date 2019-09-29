@@ -1,0 +1,1 @@
+[{"name": "threads", "compile_args": ["-pthread"], "link_args": ["-pthread"]}, {"name": "udev", "compile_args": [], "link_args": []}]

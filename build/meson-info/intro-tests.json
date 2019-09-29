@@ -1,0 +1,1 @@
+[{"cmd": ["/home/jxz/Downloads/fuse-3.6.2/build/test/wrong_command"], "env": {}, "name": "wrong_command", "workdir": null, "timeout": 30, "suite": ["libfuse3"], "is_parallel": true}]

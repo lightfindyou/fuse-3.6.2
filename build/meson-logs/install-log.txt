@@ -1,0 +1,15 @@
+# List of files installed by Meson
+# Does not contain files installed by custom scripts.
+/usr/local/lib/x86_64-linux-gnu/libfuse3.so.3.6.2
+/usr/local/lib/x86_64-linux-gnu/libfuse3.so.3
+/usr/local/lib/x86_64-linux-gnu/libfuse3.so
+/usr/local/bin/fusermount3
+/usr/local/sbin/mount.fuse3
+/usr/local/include/fuse3/fuse.h
+/usr/local/include/fuse3/fuse_common.h
+/usr/local/include/fuse3/fuse_lowlevel.h
+/usr/local/include/fuse3/fuse_opt.h
+/usr/local/include/fuse3/cuse_lowlevel.h
+/usr/local/share/man/man1/fusermount3.1
+/usr/local/share/man/man8/mount.fuse3.8
+/usr/local/lib/x86_64-linux-gnu/pkgconfig/fuse3.pc
