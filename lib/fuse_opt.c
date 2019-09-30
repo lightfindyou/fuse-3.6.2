@@ -96,7 +96,7 @@ int fuse_opt_insert_arg(struct fuse_args *args, int pos, const char *arg)
 	return fuse_opt_insert_arg_common(args, pos, arg);
 }
 
-static int next_arg(struct fuse_opt_context *ctx, const char *opt)
+static int next_arg(struct fuse_opt_context *ctx, const char *opt)	//Check the boundary and add the ctx->argctr by 1.
 {
 	if (ctx->argctr + 1 >= ctx->argc) {
 		fprintf(stderr, "fuse: missing argument after `%s'\n", opt);
@@ -263,7 +263,7 @@ static int process_opt_sep_arg(struct fuse_opt_context *ctx,
 		return alloc_failed();
 
 	memcpy(newarg, arg, sep);
-	strcpy(newarg + sep, param);
+	strcpy(newarg + sep, param);	//Copy the arg[0-sep] and the next arg to newarg.
 	res = process_opt(ctx, opt, sep, newarg, iso);
 	free(newarg);
 
@@ -277,7 +277,7 @@ static int process_gopt(struct fuse_opt_context *ctx, const char *arg, int iso)
 	if (opt) {	//If matched opt has been found.
 		for (; opt; opt = find_opt(opt + 1, arg, &sep)) {
 			int res;
-			if (sep && opt->templ[sep] == ' ' && !arg[sep])	//If only part of tamplet is compared.
+			if (sep && opt->templ[sep] == ' ' && !arg[sep])	//If only part of tamplet is compared and latest compared char is ' ' and arg has next char.
 				res = process_opt_sep_arg(ctx, opt, sep, arg,
 							  iso);
 			else
