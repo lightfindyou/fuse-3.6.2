@@ -228,12 +228,12 @@ static int process_opt(struct fuse_opt_context *ctx,
 		       const struct fuse_opt *opt, unsigned sep,
 		       const char *arg, int iso)
 {
-	if (opt->offset == -1U) {
+	if (opt->offset == -1U) {	//If opt->offset is the default value, call proc
 		if (call_proc(ctx, arg, opt->value, iso) == -1)
 			return -1;
 	} else {
-		void *var = (char *)ctx->data + opt->offset;
-		if (sep && opt->templ[sep + 1]) {
+		void *var = (char *)ctx->data + opt->offset;	//Find the offset inside the data.
+		if (sep && opt->templ[sep + 1]) {	//If templet is partial compared.
 			const char *param = arg + sep;
 			if (opt->templ[sep] == '=')
 				param ++;
