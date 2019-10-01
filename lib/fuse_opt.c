@@ -56,13 +56,13 @@ int fuse_opt_add_arg(struct fuse_args *args, const char *arg)	//Add the arg to t
 	char **newargv;
 	char *newarg;
 
-	assert(!args->argv || args->allocated);		//Abort if args is both NULL and unallocated
+	assert(!args->argv || args->allocated);		//Abort if args->atgv is NULL and args->allocated is 0.
 
 	newarg = strdup(arg);
 	if (!newarg)
 		return alloc_failed();
 	//Copy the argv into a lager place(allocate memory)
-	newargv = realloc(args->argv, (args->argc + 2) * sizeof(char *));	//Why is here 2 more sizeof(char *) space is allocated?		Answer: One is for arg,another is for NULL,and the original is `(args->argc + 1) * sizeof(char *)`
+	newargv = realloc(args->argv, (args->argc + 2) * sizeof(char *));	//Why is here 2 more sizeof(char *) space is allocated?		Answer(Wrong): One is for arg,another is for NULL,and the original is `(args->argc + 1) * sizeof(char *)`
 	if (!newargv) {
 		free(newarg);
 		return alloc_failed();
@@ -75,22 +75,22 @@ int fuse_opt_add_arg(struct fuse_args *args, const char *arg)	//Add the arg to t
 	return 0;
 }
 
-static int fuse_opt_insert_arg_common(struct fuse_args *args, int pos,
+static int fuse_opt_insert_arg_common(struct fuse_args *args, int pos,	//Insert (*arg)[String/char] to the (*(*(args->argv[pos])[char**])[char*])[String/char].
 				      const char *arg)
 {
-	assert(pos <= args->argc);
+	assert(pos <= args->argc);	//Make sure pos is appropricate.
 	if (fuse_opt_add_arg(args, arg) == -1)
 		return -1;
 
 	if (pos != args->argc - 1) {
 		char *newarg = args->argv[args->argc - 1];
-		memmove(&args->argv[pos + 1], &args->argv[pos],
+		memmove(&args->argv[pos + 1], &args->argv[pos],	//Move the argv[pos] and after data one char* length after.
 			sizeof(char *) * (args->argc - pos - 1));
 		args->argv[pos] = newarg;
 	}
 	return 0;
 }
-
+//Insert arg into the pos-th postion of args
 int fuse_opt_insert_arg(struct fuse_args *args, int pos, const char *arg)
 {
 	return fuse_opt_insert_arg_common(args, pos, arg);
@@ -289,8 +289,8 @@ static int process_gopt(struct fuse_opt_context *ctx, const char *arg, int iso)	
 	} else	//If have not found matched opt, call proc.
 		return call_proc(ctx, arg, FUSE_OPT_KEY_OPT, iso);
 }
-
-static int process_real_option_group(struct fuse_opt_context *ctx, char *opts)	//Copy the data matching with the ctx->opt into ctx->data,  \[0-3][0-7][0-7] formate string into a single char and the remained into *d.
+//Copy the data matching with the ctx->opt into ctx->data,  \[0-3][0-7][0-7] formate string into a single char and the others remaine unchanged.
+static int process_real_option_group(struct fuse_opt_context *ctx, char *opts)
 {
 	char *s = opts;
 	char *d = s;
@@ -330,7 +330,7 @@ static int process_real_option_group(struct fuse_opt_context *ctx, char *opts)	/
 	return 0;
 }
 //Duplicate opts and pass the replica to real function.
-static int process_option_group(struct fuse_opt_context *ctx, const char *opts)	//Copy the data matching with the ctx->opt into ctx->data,  \[0-3][0-7][0-7] formate string into a single char and the remained into *d.
+static int process_option_group(struct fuse_opt_context *ctx, const char *opts)	//Copy the data matching with the ctx->opt into ctx->data,  \[0-3][0-7][0-7] formate string into a single char and the others remaine unchanged.
 {
 	int res;
 	char *copy = strdup(opts);
@@ -343,42 +343,42 @@ static int process_option_group(struct fuse_opt_context *ctx, const char *opts)	
 	free(copy);
 	return res;
 }
-
+//Copy the data matching with the ctx->opt into ctx->data, '--xxx' type arg to ctx-outargs and merge \[0-3][0-7][0-7] formate string into a single char.
 static int process_one(struct fuse_opt_context *ctx, const char *arg)
 {
 	if (ctx->nonopt || arg[0] != '-')	//If ctx have no opt or the arg is not begin with '-',call the proc.
 		return call_proc(ctx, arg, FUSE_OPT_KEY_NONOPT, 0);
 	else if (arg[1] == 'o') {	//If arg start with '-o'.
-		if (arg[2])		//If arg start with '-o' and the following char is not NULL.
-			return process_option_group(ctx, arg + 2);
-		else {
+		if (arg[2])		//If arg starts with '-o' and the following char is NOT NULL.
+			return process_option_group(ctx, arg + 2);	//Copy the data matching with the ctx->opt into ctx->data, merge \[0-3][0-7][0-7] formate string into a single char and the remained into *d.
+		else {	//If arg start with '-o' and the following char IS NULL.
 			if (next_arg(ctx, arg) == -1)
 				return -1;
 
-			return process_option_group(ctx,
+			return process_option_group(ctx,	//Process next arg.
 						    ctx->argv[ctx->argctr]);
 		}
-	} else if (arg[1] == '-' && !arg[2]) {
-		if (add_arg(ctx, arg) == -1)
+	} else if (arg[1] == '-' && !arg[2]) {	//If arg starts with '--' and has next char.
+		if (add_arg(ctx, arg) == -1)	//Add arg to ctx->outargs.
 			return -1;
-		ctx->nonopt = ctx->outargs.argc;
+		ctx->nonopt = ctx->outargs.argc;	//Understand: why set ctx->nonopt to ctx->outargs.argc.
 		return 0;
 	} else
-		return process_gopt(ctx, arg, 0);
+		return process_gopt(ctx, arg, 0);	//Find the opt matching with the arg, and copy arg to the appropricate position of ctx->data.
 }
-
+//For every ctx->argv, copy the data matching with the ctx->opt into ctx->data, '--xxx' type arg to ctx-outargs and merge \[0-3][0-7][0-7] formate string into a single char.
 static int opt_parse(struct fuse_opt_context *ctx)
 {
 	if (ctx->argc) {
 		if (add_arg(ctx, ctx->argv[0]) == -1)	//Add the command name to the end of ctx->outatgs
 			return -1;
 	}
-
-	for (ctx->argctr = 1; ctx->argctr < ctx->argc; ctx->argctr++)
+	//For every arg, copy the data matching with the ctx->opt into ctx->data, '--xxx' type arg to ctx-outargs and merge \[0-3][0-7][0-7] formate string into a single char.
+	for (ctx->argctr = 1; ctx->argctr < ctx->argc; ctx->argctr++)	//Note: the ctx->argctr is shared, so when call next_arg() the ctx-argctr may add by 2 or more.
 		if (process_one(ctx, ctx->argv[ctx->argctr]) == -1)
 			return -1;
 
-	if (ctx->opts) {
+	if (ctx->opts) {	//Insert '-o' and opts into 1,2-th positon.
 		if (fuse_opt_insert_arg(&ctx->outargs, 1, "-o") == -1 ||
 		    fuse_opt_insert_arg(&ctx->outargs, 2, ctx->opts) == -1)
 			return -1;
@@ -406,12 +406,12 @@ int fuse_opt_parse(struct fuse_args *args, void *data,
 
 	if (!args || !args->argv || !args->argc)	//Check the args and arc
 		return 0;
-
+//For every ctx->argv, copy the data matching with the ctx->opt into ctx->data, '--xxx' type arg to ctx-outargs and merge \[0-3][0-7][0-7] formate string into a single char.
 	ctx.argc = args->argc;
 	ctx.argv = args->argv;
 	//Until now, all the DATA from the caller is copied into the parameter ctx
 	res = opt_parse(&ctx);
-	if (res != -1) {
+	if (res != -1) {	//Exchange args with ctx.outargs.
 		struct fuse_args tmp = *args;
 		*args = ctx.outargs;
 		ctx.outargs = tmp;
