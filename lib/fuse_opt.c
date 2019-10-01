@@ -290,7 +290,7 @@ static int process_gopt(struct fuse_opt_context *ctx, const char *arg, int iso)	
 		return call_proc(ctx, arg, FUSE_OPT_KEY_OPT, iso);
 }
 
-static int process_real_option_group(struct fuse_opt_context *ctx, char *opts)
+static int process_real_option_group(struct fuse_opt_context *ctx, char *opts)	//Copy the data matching with the ctx->opt into ctx->data,  \[0-3][0-7][0-7] formate string into a single char and the remained into *d.
 {
 	char *s = opts;
 	char *d = s;
@@ -302,15 +302,15 @@ static int process_real_option_group(struct fuse_opt_context *ctx, char *opts)
 		if (*s == ',' || end) {		//If *s is ',' or '\0'
 			int res;
 
-			*d = '\0';
+			*d = '\0';	//Understand: Why here set *d to '\0' and 4 lines later set d to opts.
 			res = process_gopt(ctx, opts, 1);	//Find the ctx->opt matching with the opts, and copy arg(part of opts) to the appropricate position of ctx->data.
 			if (res == -1)
 				return -1;
-			d = opts;
-		} else {
-			if (s[0] == '\\' && s[1] != '\0') {		//If s[0] is '\' and has next char.
+			d = opts;	//After copy the matching arg into ctx->data, d remains unchanged.
+		} else {	//Copy the \[0-3][0-7][0-7] formate string into a single char and copy the others into *d.
+			if (s[0] == '\\' && s[1] != '\0') {	//If s[0] is '\' and has next char('\0' has NO obviois difference with '0',just means it is used as NULL).
 				s++;
-				if (s[0] >= '0' && s[0] <= '3' &&	//Copy the \[0-3][0-7][0-7] formate string into a single char
+				if (s[0] >= '0' && s[0] <= '3' &&	//Copy the \[0-3][0-7][0-7] formate string into a single char.
 				    s[1] >= '0' && s[1] <= '7' &&
 				    s[2] >= '0' && s[2] <= '7') {
 					*d++ = (s[0] - '0') * 0100 +
@@ -329,8 +329,8 @@ static int process_real_option_group(struct fuse_opt_context *ctx, char *opts)
 
 	return 0;
 }
-
-static int process_option_group(struct fuse_opt_context *ctx, const char *opts)
+//Duplicate opts and pass the replica to real function.
+static int process_option_group(struct fuse_opt_context *ctx, const char *opts)	//Copy the data matching with the ctx->opt into ctx->data,  \[0-3][0-7][0-7] formate string into a single char and the remained into *d.
 {
 	int res;
 	char *copy = strdup(opts);
