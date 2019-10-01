@@ -202,21 +202,21 @@ int fuse_opt_match(const struct fuse_opt *opts, const char *opt)
 	unsigned dummy;
 	return find_opt(opts, opt, &dummy) ? 1 : 0;
 }
-
-static int process_opt_param(void *var, const char *format, const char *param,
+//According to *format, copy appropricate string from *param to *var.
+static int process_opt_param(void *var, const char *format, const char *param,	//Offset data inside the data,uncompared templet,uncompared arg,the whole arg.
 			     const char *arg)
 {
-	assert(format[0] == '%');
+	assert(format[0] == '%');	//If format[0] is NOT '%',stop  program.
 	if (format[1] == 's') {
-		char **s = var;
+		char **s = var;	//Cast void * to char **
 		char *copy = strdup(param);
 		if (!copy)
 			return alloc_failed();
 
-		free(*s);
-		*s = copy;
+		free(*s);	//Free *var
+		*s = copy;	//Store *param in var(type char **).
 	} else {
-		if (sscanf(param, format, var) != 1) {
+		if (sscanf(param, format, var) != 1) {	//Copy the appropricate char from *param to *var.
 			fprintf(stderr, "fuse: invalid parameter in option `%s'\n", arg);
 			return -1;
 		}
@@ -224,7 +224,7 @@ static int process_opt_param(void *var, const char *format, const char *param,
 	return 0;
 }
 
-static int process_opt(struct fuse_opt_context *ctx,
+static int process_opt(struct fuse_opt_context *ctx,	//According to opt->templet, copy appropricate string from *(arg+sep) or opt->value to ctx->data.
 		       const struct fuse_opt *opt, unsigned sep,
 		       const char *arg, int iso)
 {
@@ -235,18 +235,18 @@ static int process_opt(struct fuse_opt_context *ctx,
 		void *var = (char *)ctx->data + opt->offset;	//Find the offset inside the data.
 		if (sep && opt->templ[sep + 1]) {	//If templet is partial compared.
 			const char *param = arg + sep;
-			if (opt->templ[sep] == '=')
+			if (opt->templ[sep] == '=')	//Skip over the '='.
 				param ++;
-			if (process_opt_param(var, opt->templ + sep + 1,
-					      param, arg) == -1)
+			if (process_opt_param(var, opt->templ + sep + 1,	//Offset data inside the data,uncompared templet,uncompared arg,the whole arg
+					      param, arg) == -1)	//According to uncompared templet, copy string from uncompared param to var.
 				return -1;
 		} else
-			*(int *)var = opt->value;
+			*(int *)var = opt->value;	//Set var to opt->value.
 	}
 	return 0;
 }
 
-static int process_opt_sep_arg(struct fuse_opt_context *ctx,
+static int process_opt_sep_arg(struct fuse_opt_context *ctx,	//Merge the seperated arguments in ctx->argv and copy the appropricate arguments to ctx->data according to opt->templet.
 			       const struct fuse_opt *opt, unsigned sep,
 			       const char *arg, int iso)
 {
@@ -264,16 +264,16 @@ static int process_opt_sep_arg(struct fuse_opt_context *ctx,
 
 	memcpy(newarg, arg, sep);
 	strcpy(newarg + sep, param);	//Copy the arg[0-sep] and the next arg to newarg.
-	res = process_opt(ctx, opt, sep, newarg, iso);
+	res = process_opt(ctx, opt, sep, newarg, iso);	//According to opt->templet, copy appropricate string from *(newarg+sep) or opt->value to ctx->data.
 	free(newarg);
 
 	return res;
 }
 
-static int process_gopt(struct fuse_opt_context *ctx, const char *arg, int iso)
+static int process_gopt(struct fuse_opt_context *ctx, const char *arg, int iso)	//Find the opt matching with the arg, and copy arg to the appropricate position of ctx->data.
 {
 	unsigned sep;
-	const struct fuse_opt *opt = find_opt(ctx->opt, arg, &sep);	//Find the opt match with the arg, sep is the compared length of templet.
+	const struct fuse_opt *opt = find_opt(ctx->opt, arg, &sep);	//Find the opt matching with the arg, sep is the compared length of templet.
 	if (opt) {	//If matched opt has been found.
 		for (; opt; opt = find_opt(opt + 1, arg, &sep)) {
 			int res;
@@ -281,7 +281,7 @@ static int process_gopt(struct fuse_opt_context *ctx, const char *arg, int iso)
 				res = process_opt_sep_arg(ctx, opt, sep, arg,
 							  iso);
 			else
-				res = process_opt(ctx, opt, sep, arg, iso);
+				res = process_opt(ctx, opt, sep, arg, iso);	//Until now, copy appropricate data from *(arg+sep) to ctx->data.
 			if (res == -1)
 				return -1;
 		}
@@ -303,7 +303,7 @@ static int process_real_option_group(struct fuse_opt_context *ctx, char *opts)
 			int res;
 
 			*d = '\0';
-			res = process_gopt(ctx, opts, 1);
+			res = process_gopt(ctx, opts, 1);	//Find the ctx->opt matching with the opts, and copy arg(part of opts) to the appropricate position of ctx->data.
 			if (res == -1)
 				return -1;
 			d = opts;
