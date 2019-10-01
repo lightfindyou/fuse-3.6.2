@@ -41,7 +41,7 @@ static struct options {
 	const char *contents;
 	int show_help;
 } options;
-
+//At last, it is casted into fuse_opt, so the last 1 means the fuse_opt->value.
 #define OPTION(t, p)                           \
     { t, offsetof(struct options, p), 1 }
 static const struct fuse_opt option_spec[] = {
@@ -157,9 +157,9 @@ int main(int argc, char *argv[])
 	   values are specified */
 	options.filename = strdup("hello");
 	options.contents = strdup("Hello World!\n");
-
+	//For every args->argv, copy the data matching with the option_spec into options + option_spec[i]->offset, '--xxx' type arg to args.
 	/* Parse options */
-	if (fuse_opt_parse(&args, &options, option_spec, NULL) == -1)
+	if (fuse_opt_parse(&args, &options, option_spec, NULL) == -1)	//So, this program can specify the content as --help said.
 		return 1;
 
 	/* When --help is specified, first print our own file-system

@@ -223,8 +223,8 @@ static int process_opt_param(void *var, const char *format, const char *param,	/
 	}
 	return 0;
 }
-
-static int process_opt(struct fuse_opt_context *ctx,	//According to opt->templet, copy appropricate string from *(arg+sep) or opt->value to ctx->data.
+//According to opt->templet, copy appropricate string from *(arg+sep) or opt->value to ctx->data.
+static int process_opt(struct fuse_opt_context *ctx,
 		       const struct fuse_opt *opt, unsigned sep,
 		       const char *arg, int iso)
 {
@@ -269,8 +269,8 @@ static int process_opt_sep_arg(struct fuse_opt_context *ctx,	//Merge the seperat
 
 	return res;
 }
-
-static int process_gopt(struct fuse_opt_context *ctx, const char *arg, int iso)	//Find the opt matching with the arg, and copy arg to the appropricate position of ctx->data.
+//Find the opt matching with the arg, and copy arg to the appropricate position of ctx->data.
+static int process_gopt(struct fuse_opt_context *ctx, const char *arg, int iso)
 {
 	unsigned sep;
 	const struct fuse_opt *opt = find_opt(ctx->opt, arg, &sep);	//Find the opt matching with the arg, sep is the compared length of templet.
@@ -366,7 +366,7 @@ static int process_one(struct fuse_opt_context *ctx, const char *arg)
 	} else
 		return process_gopt(ctx, arg, 0);	//Find the opt matching with the arg, and copy arg to the appropricate position of ctx->data.
 }
-//For every ctx->argv, copy the data matching with the ctx->opt into ctx->data, '--xxx' type arg to ctx-outargs and merge \[0-3][0-7][0-7] formate string into a single char.
+//For every ctx->argv, copy the data matching with the ctx->opt into ctx->data, '--xxx' type arg to ctx->outargs and merge \[0-3][0-7][0-7] formate string into a single char.
 static int opt_parse(struct fuse_opt_context *ctx)
 {
 	if (ctx->argc) {
@@ -393,8 +393,8 @@ static int opt_parse(struct fuse_opt_context *ctx)
 
 	return 0;
 }
-
-int fuse_opt_parse(struct fuse_args *args, void *data,
+//For every args->argv, copy the data matching with the opts into data + opt->offset, '--xxx' type arg to args.
+int fuse_opt_parse(struct fuse_args *args, void *data,	//Understand: where is the \[0-3][0-7][0-7] formate data?
 		   const struct fuse_opt opts[], fuse_opt_proc_t proc)
 {
 	int res;
@@ -406,7 +406,7 @@ int fuse_opt_parse(struct fuse_args *args, void *data,
 
 	if (!args || !args->argv || !args->argc)	//Check the args and arc
 		return 0;
-//For every ctx->argv, copy the data matching with the ctx->opt into ctx->data, '--xxx' type arg to ctx-outargs and merge \[0-3][0-7][0-7] formate string into a single char.
+
 	ctx.argc = args->argc;
 	ctx.argv = args->argv;
 	//Until now, all the DATA from the caller is copied into the parameter ctx
