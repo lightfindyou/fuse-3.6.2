@@ -44,7 +44,7 @@ static struct options {
 //At last, it is casted into fuse_opt, so the last 1 means the fuse_opt->value.
 #define OPTION(t, p)                           \
     { t, offsetof(struct options, p), 1 }
-static const struct fuse_opt option_spec[] = {
+static const struct fuse_opt option_spec[] = {	//In fact, it does a map between the cmd arguments and the position of parameters and store the default value.
 	OPTION("--name=%s", filename),
 	OPTION("--contents=%s", contents),
 	OPTION("-h", show_help),

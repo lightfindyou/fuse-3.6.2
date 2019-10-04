@@ -123,7 +123,7 @@ static void exec_fusermount(const char *argv[])
 void fuse_mount_version(void)
 {
 	int pid = fork();
-	if (!pid) {
+	if (!pid) {	//pid =0, which means this is the child.
 		const char *argv[] = { FUSERMOUNT_PROG, "--version", NULL };
 		exec_fusermount(argv);
 		_exit(1);

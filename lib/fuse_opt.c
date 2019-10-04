@@ -223,7 +223,7 @@ static int process_opt_param(void *var, const char *format, const char *param,	/
 	}
 	return 0;
 }
-//According to opt->templet, copy appropricate string from *(arg+sep) or opt->value to ctx->data.
+//According to opt->templet, if it is partical compared,copy appropricate string from *(arg+sep) to ctx->data + opt->offset, else(completely compared) copy opt->value to ctx->data + opt->offset.
 static int process_opt(struct fuse_opt_context *ctx,
 		       const struct fuse_opt *opt, unsigned sep,
 		       const char *arg, int iso)

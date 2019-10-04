@@ -173,11 +173,11 @@ static int fuse_helper_opt_proc(void *data, const char *arg, int key,
 
 /* Under FreeBSD, there is no subtype option so this
    function actually sets the fsname */
-static int add_default_subtype(const char *progname, struct fuse_args *args)
+static int add_default_subtype(const char *progname, struct fuse_args *args)	//Add '-osubtype=progname' to the last of args.
 {
 	int res;
 	char *subtype_opt;
-
+	//Find the last appearance of char '/'.
 	const char *basename = strrchr(progname, '/');
 	if (basename == NULL)
 		basename = progname;
@@ -194,19 +194,19 @@ static int add_default_subtype(const char *progname, struct fuse_args *args)
 #else
 	sprintf(subtype_opt, "-osubtype=%s", basename);
 #endif
-	res = fuse_opt_add_arg(args, subtype_opt);
+	res = fuse_opt_add_arg(args, subtype_opt);	//Add subtype_opt to the end of args and set args->allocated to be 1.
 	free(subtype_opt);
 	return res;
 }
-
-int fuse_parse_cmdline(struct fuse_args *args,
+//Set max_idle_threads to be 10;for every args->argv, copy the data matching with the fuse_helper_opts into opts + fuse_helper_opt->offset, '--xxx' type arg to args and set subtype.
+int fuse_parse_cmdline(struct fuse_args *args,	
 		       struct fuse_cmdline_opts *opts)
 {
 	memset(opts, 0, sizeof(struct fuse_cmdline_opts));
 
-	opts->max_idle_threads = 10;
+	opts->max_idle_threads = 10;	//Here set the max idle threads.
 
-	if (fuse_opt_parse(args, opts, fuse_helper_opts,
+	if (fuse_opt_parse(args, opts, fuse_helper_opts,	//For every args->argv, copy the data matching with the fuse_helper_opts into opts + fuse_helper_opt->offset, '--xxx' type arg to args.
 			   fuse_helper_opt_proc) == -1)
 		return -1;
 
@@ -214,7 +214,7 @@ int fuse_parse_cmdline(struct fuse_args *args,
 	   set subtype to program's basename.
 	   *FreeBSD*: if fsname is not specified, set to program's
 	   basename. */
-	if (!opts->nodefault_subtype)
+	if (!opts->nodefault_subtype)	//Add '-osubtype=progname' to the last of args[Set subtype].
 		if (add_default_subtype(args->argv[0], args) == -1)
 			return -1;
 
@@ -283,7 +283,7 @@ int fuse_main_real(int argc, char *argv[], const struct fuse_operations *op,
 	struct fuse *fuse;
 	struct fuse_cmdline_opts opts;
 	int res;
-
+	//Set max_idle_threads to be 10; set subtype and for every args->argv, copy the data matching with the fuse_helper_opts into opts + fuse_helper_opt->offset, '--xxx' type arg to args .
 	if (fuse_parse_cmdline(&args, &opts) != 0)
 		return 1;
 
