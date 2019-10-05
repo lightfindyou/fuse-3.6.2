@@ -113,22 +113,22 @@ static const struct fuse_opt fuse_mount_opts[] = {
 	FUSE_OPT_KEY("noatime",			KEY_KERN_FLAG),
 	FUSE_OPT_END
 };
-
+//Execute /usr/local/bin/fusermount3
 static void exec_fusermount(const char *argv[])
 {
-	execv(FUSERMOUNT_DIR "/" FUSERMOUNT_PROG, (char **) argv);
-	execvp(FUSERMOUNT_PROG, (char **) argv);
+	execv(FUSERMOUNT_DIR "/" FUSERMOUNT_PROG, (char **) argv);	//Execute /usr/local/bin/fusermount3; return only if error occurred, so normally, next line will not be executed.
+	execvp(FUSERMOUNT_PROG, (char **) argv);	//Search fusermount3 programe in the way of shell search(in the situation of previous line invalid).
 }
-
+//Out print the fusermount3 version
 void fuse_mount_version(void)
 {
 	int pid = fork();
-	if (!pid) {	//pid =0, which means this is the child.
-		const char *argv[] = { FUSERMOUNT_PROG, "--version", NULL };
+	if (!pid) {	//pid =0, which means this is the child process.
+		const char *argv[] = { FUSERMOUNT_PROG, "--version", NULL };	//Set "--version" as the args.
 		exec_fusermount(argv);
 		_exit(1);
 	} else if (pid != -1)
-		waitpid(pid, NULL, 0);
+		waitpid(pid, NULL, 0);	//Wait for the end of child process
 }
 
 struct mount_flags {

@@ -294,11 +294,11 @@ out_free_so:
 	free(so);
 	goto out;
 }
-
+//Find the module in fuse_module matching with module, and add the matching module's module->ctr by one; return the matching module.
 static struct fuse_module *fuse_find_module(const char *module)
 {
 	struct fuse_module *m;
-	for (m = fuse_modules; m; m = m->next) {
+	for (m = fuse_modules; m; m = m->next) {	//Understand: Where does the fuse_modules come from? and what is inside the var?
 		if (strcmp(module, m->name) == 0) {
 			m->ctr++;
 			break;
@@ -4636,19 +4636,19 @@ static const struct fuse_opt fuse_help_opts[] = {
 	FUSE_OPT_KEY("modules=%s", FUSE_OPT_KEY_KEEP),
 	FUSE_OPT_END
 };
-
+//Call (*fac)(-h) to print help.
 static void print_module_help(const char *name,
 			      fuse_module_factory_t *fac)
 {
 	struct fuse_args a = FUSE_ARGS_INIT(0, NULL);
-	if (fuse_opt_add_arg(&a, "") == -1 ||
+	if (fuse_opt_add_arg(&a, "") == -1 ||	//Understand: why here add a ""? and How could it pass the assert(fuse_opt.c line:59)?
 	    fuse_opt_add_arg(&a, "-h") == -1)
 		return;
 	printf("\nOptions for %s module:\n", name);
-	(*fac)(&a, NULL);
+	(*fac)(&a, NULL);	//Understand: Where does the fac point to and Why not (**fac)?
 	fuse_opt_free_args(&a);
 }
-
+//Print part of help and module helps.
 void fuse_lib_help(struct fuse_args *args)
 {
 	/* These are not all options, but only the ones that
@@ -4672,9 +4672,9 @@ void fuse_lib_help(struct fuse_args *args)
 	fuse_lowlevel_help();
 
 	/* Print help for builtin modules */
-	print_module_help("subdir", &fuse_module_subdir_factory);
+	print_module_help("subdir", &fuse_module_subdir_factory);	//Call fuse_module_subdir_factory(-h) to print help.
 #ifdef HAVE_ICONV
-	print_module_help("iconv", &fuse_module_iconv_factory);
+	print_module_help("iconv", &fuse_module_iconv_factory);	//Call fuse_module_iconv_factory(-h) to print help.
 #endif
 
 	/* Parse command line options in case we need to
@@ -4692,12 +4692,12 @@ void fuse_lib_help(struct fuse_args *args)
 	// Iterate over all modules
 	for (module = conf.modules; module; module = next) {
 		char *p;
-		for (p = module; *p && *p != ':'; p++);
+		for (p = module; *p && *p != ':'; p++);	//Understand: Why here use ':' as the seperator?
 		next = *p ? p + 1 : NULL;
 		*p = '\0';
 
 		m = fuse_get_module(module);
-		if (m)
+		if (m)	//Call (*(&m->factory))(-h) to print help.
 			print_module_help(module, &m->factory);
 	}
 }

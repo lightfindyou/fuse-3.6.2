@@ -2622,12 +2622,12 @@ static const struct fuse_opt fuse_ll_opts[] = {
 	LL_OPTION("allow_root", deny_others, 1),
 	FUSE_OPT_END
 };
-
+//Print kernel interface version and fusermount3 version.
 void fuse_lowlevel_version(void)
 {
 	printf("using FUSE kernel interface version %i.%i\n",
 	       FUSE_KERNEL_VERSION, FUSE_KERNEL_MINOR_VERSION);
-	fuse_mount_version();
+	fuse_mount_version();	//Out print the fusermount3 version
 }
 
 void fuse_lowlevel_help(void)

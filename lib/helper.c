@@ -125,7 +125,7 @@ static const struct fuse_opt conn_info_opt_spec[] = {
 	FUSE_OPT_END
 };
 
-
+//Show part of help.
 void fuse_cmdline_help(void)
 {
 	printf("    -h   --help            print help\n"
@@ -299,8 +299,8 @@ int fuse_main_real(int argc, char *argv[], const struct fuse_operations *op,
 			printf("usage: %s [options] <mountpoint>\n\n",
 			       args.argv[0]);
 		printf("FUSE options:\n");
-		fuse_cmdline_help();
-		fuse_lib_help(&args);
+		fuse_cmdline_help();	//Show part of help.
+		fuse_lib_help(&args);	//Print part of help and module helps.
 		res = 0;
 		goto out1;
 	}
