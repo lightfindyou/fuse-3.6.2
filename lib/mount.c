@@ -523,12 +523,12 @@ static int get_mnt_flag_opts(char **mnt_optsp, int flags)
 	}
 	return 0;
 }
-
+//Construct mount_opts and parse args.
 struct mount_opts *parse_mount_opts(struct fuse_args *args)
 {
 	struct mount_opts *mo;
 
-	mo = (struct mount_opts*) malloc(sizeof(struct mount_opts));
+	mo = (struct mount_opts*) malloc(sizeof(struct mount_opts));	//The allocated memory is not initialized.
 	if (mo == NULL)
 		return NULL;
 

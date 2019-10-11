@@ -205,7 +205,7 @@ static pthread_key_t fuse_context_key;
 static pthread_mutex_t fuse_context_lock = PTHREAD_MUTEX_INITIALIZER;
 static int fuse_context_ref;
 static struct fuse_module *fuse_modules = NULL;
-
+//Copy args into fuse_module's content, place it into the modules chain and pass it to outer fuse_modules.
 static int fuse_register_module(const char *name,
 				fuse_module_factory_t factory,
 				struct fusemod_so *so)
@@ -228,12 +228,12 @@ static int fuse_register_module(const char *name,
 	mod->so = so;
 	if (mod->so)
 		mod->so->ctr++;
-	mod->next = fuse_modules;
-	fuse_modules = mod;
+	mod->next = fuse_modules;	//Set mod->next.
+	fuse_modules = mod;	//Prepare for next assigment and pass the module out.
 
 	return 0;
 }
-
+//Delete module from fuse_modules chain and free module.
 static void fuse_unregister_module(struct fuse_module *m)
 {
 	struct fuse_module **mp;
@@ -246,7 +246,7 @@ static void fuse_unregister_module(struct fuse_module *m)
 	free(m->name);
 	free(m);
 }
-
+//Open .so file, find factory and pass all the content to fuse_modules, place fuse_module into the moudle chain and pass it to outer fuse_modules.
 static int fuse_load_so_module(const char *module)
 {
 	int ret = -1;
@@ -265,7 +265,7 @@ static int fuse_load_so_module(const char *module)
 		fprintf(stderr, "fuse: failed to allocate module so\n");
 		goto out;
 	}
-
+	//Open libfusemod_${module}.so and return handler.
 	so->handle = dlopen(tmp, RTLD_NOW);
 	if (so->handle == NULL) {
 		fprintf(stderr, "fuse: dlopen(%s) failed: %s\n",
@@ -274,13 +274,13 @@ static int fuse_load_so_module(const char *module)
 	}
 
 	sprintf(tmp, "fuse_module_%s_factory", module);
-	*(void**)(&factory) = dlsym(so->handle, tmp);
+	*(void**)(&factory) = dlsym(so->handle, tmp);	//Find fuse_module_${module}_factory from the module.
 	if (factory == NULL) {
 		fprintf(stderr, "fuse: symbol <%s> not found in module: %s\n",
 			tmp, dlerror());
 		goto out_dlclose;
 	}
-	ret = fuse_register_module(module, factory, so);
+	ret = fuse_register_module(module, factory, so);	//Copy args into fuse_module's content and pass it to outer fuse_modules.
 	if (ret)
 		goto out_dlclose;
 
@@ -294,7 +294,7 @@ out_free_so:
 	free(so);
 	goto out;
 }
-//Find the module in fuse_module matching with module, and add the matching module's module->ctr by one; return the matching module.
+//Find the module in fuse_modules matching with module, and add the matching module's module->ctr by one; return the matching module.
 static struct fuse_module *fuse_find_module(const char *module)
 {
 	struct fuse_module *m;
@@ -306,38 +306,38 @@ static struct fuse_module *fuse_find_module(const char *module)
 	}
 	return m;
 }
-
+//Find module in fuse_modules, if not found, registe it and find again.
 static struct fuse_module *fuse_get_module(const char *module)
 {
 	struct fuse_module *m;
 
 	pthread_mutex_lock(&fuse_context_lock);
-	m = fuse_find_module(module);
-	if (!m) {
-		int err = fuse_load_so_module(module);
+	m = fuse_find_module(module);	//Find the matching module.
+	if (!m) {	//If not found.
+		int err = fuse_load_so_module(module);	//Load module and registe it.
 		if (!err)
 			m = fuse_find_module(module);
 	}
 	pthread_mutex_unlock(&fuse_context_lock);
 	return m;
 }
-
+//Subtract module->ctr and module->so->ctr by 1, if they are equal to 0, free the module.
 static void fuse_put_module(struct fuse_module *m)
 {
 	pthread_mutex_lock(&fuse_context_lock);
-	if (m->so)
+	if (m->so)	//If module->so is NOT NULL, make sure m->ctr is bigger than 0.
 		assert(m->ctr > 0);
 	/* Builtin modules may already have m->ctr == 0 */
 	if (m->ctr > 0)
 		m->ctr--;
-	if (!m->ctr && m->so) {
+	if (!m->ctr && m->so) {	//If m->ctr equal to 0 and m->so is NOT NULL.
 		struct fusemod_so *so = m->so;
 		assert(so->ctr > 0);
 		so->ctr--;
-		if (!so->ctr) {
+		if (!so->ctr) {	//If m->ctr equal to 0 and so->ctr equal to 0.
 			struct fuse_module **mp;
-			for (mp = &fuse_modules; *mp;) {
-				if ((*mp)->so == so)
+			for (mp = &fuse_modules; *mp;) {	//Find the module whose .so is the same with m->so and unregister it.
+				if ((*mp)->so == so)	//Understand: why here does not unregister m, but find the module in fuse_modules chain?
 					fuse_unregister_module(*mp);
 				else
 					mp = &(*mp)->next;
@@ -345,7 +345,7 @@ static void fuse_put_module(struct fuse_module *m)
 			dlclose(so->handle);
 			free(so);
 		}
-	} else if (!m->ctr) {
+	} else if (!m->ctr) {	//If m->ctr is equal to 0 and m->so is NULL, unregister it.
 		fuse_unregister_module(m);
 	}
 	pthread_mutex_unlock(&fuse_context_lock);
@@ -2559,7 +2559,7 @@ static void fuse_freecontext(void *data)
 {
 	free(data);
 }
-
+//If fuse_context_ref is 0, call pthread_key_create, fuse_context_ref++.
 static int fuse_create_context_key(void)
 {
 	int err = 0;
@@ -4738,27 +4738,27 @@ static void fuse_restore_intr_signal(int signum)
 	sigaction(signum, &sa, NULL);
 }
 
-
+//Use module to construct fuse_fs and set it as f->fs.
 static int fuse_push_module(struct fuse *f, const char *module,
 			    struct fuse_args *args)
 {
-	struct fuse_fs *fs[2] = { f->fs, NULL };
+	struct fuse_fs *fs[2] = { f->fs, NULL };	//Only used in construct the newfs.
 	struct fuse_fs *newfs;
-	struct fuse_module *m = fuse_get_module(module);
+	struct fuse_module *m = fuse_get_module(module);	//Find module in fuse_modules, if not found, registe it and find again.
 
 	if (!m)
 		return -1;
 
-	newfs = m->factory(args, fs);
+	newfs = m->factory(args, fs);	//call fuse_module_${module}_factory (args,fs)
 	if (!newfs) {
-		fuse_put_module(m);
+		fuse_put_module(m);	//Subtract module->ctr and module->so->ctr by 1, if they are equal to 0, free the module.
 		return -1;
 	}
 	newfs->m = m;
 	f->fs = newfs;
 	return 0;
 }
-
+//Return fuse_fs whose fuse_operations and user_data is set to op and userdata.
 struct fuse_fs *fuse_fs_new(const struct fuse_operations *op, size_t op_size,
 			    void *user_data)
 {
@@ -4784,7 +4784,7 @@ struct fuse_fs *fuse_fs_new(const struct fuse_operations *op, size_t op_size,
 static int node_table_init(struct node_table *t)
 {
 	t->size = NODE_TABLE_MIN_SIZE;
-	t->array = (struct node **) calloc(1, sizeof(struct node *) * t->size);
+	t->array = (struct node **) calloc(1, sizeof(struct node *) * t->size);	//Here array is a pointer and the start position of node* type array.
 	if (t->array == NULL) {
 		fprintf(stderr, "fuse: memory allocation failed\n");
 		return -1;
@@ -4857,17 +4857,17 @@ struct fuse *fuse_new_31(struct fuse_args *args,
 	/* Have the builtin modules already been registered? */
 	if (builtin_modules_registered == 0) {
 		/* If not, register them. */
-		fuse_register_module("subdir", fuse_module_subdir_factory, NULL);
+		fuse_register_module("subdir", fuse_module_subdir_factory, NULL);	//Unserstand: where does the fuse_module_subdir_factory actually points to?
 #ifdef HAVE_ICONV
 		fuse_register_module("iconv", fuse_module_iconv_factory, NULL);
 #endif
 		builtin_modules_registered= 1;
 	}
 	pthread_mutex_unlock(&fuse_context_lock);
-
+	//If fuse_context_ref is 0, call pthread_key_create, fuse_context_ref++.
 	if (fuse_create_context_key() == -1)
 		goto out_free;
-
+	//Return fuse_fs objext whose fuse_operations and user_data is set to op and userdata.
 	fs = fuse_fs_new(op, op_size, user_data);
 	if (!fs)
 		goto out_delete_context_key;
@@ -4875,7 +4875,7 @@ struct fuse *fuse_new_31(struct fuse_args *args,
 	f->fs = fs;
 
 	/* Oh f**k, this is ugly! */
-	if (!fs->op.lock) {
+	if (!fs->op.lock) {	//Understand: what does this means?
 		llop.getlk = NULL;
 		llop.setlk = NULL;
 	}
@@ -4888,14 +4888,14 @@ struct fuse *fuse_new_31(struct fuse_args *args,
 	if (f->conf.modules) {
 		char *module;
 		char *next;
-
+		//For every module in f->conf.modules(sperated by ':').
 		for (module = f->conf.modules; module; module = next) {
 			char *p;
 			for (p = module; *p && *p != ':'; p++);
 			next = *p ? p + 1 : NULL;
 			*p = '\0';
-			if (module[0] &&
-			    fuse_push_module(f, module, args) == -1)
+			if (module[0] &&	//If module[0] is NOT NULL and unable to use module to construct fuse_fs.
+			    fuse_push_module(f, module, args) == -1)	//Here construct new fuse_fs with moudle->factory and set as f->fs.
 				goto out_free_fs;
 		}
 	}
@@ -4910,7 +4910,7 @@ struct fuse *fuse_new_31(struct fuse_args *args,
 	 */
 	f->conf.readdir_ino = 1;
 #endif
-
+	//Creat a new fuse_session for f->se.
 	f->se = fuse_session_new(args, &llop, sizeof(llop), f);
 	if (f->se == NULL)
 		goto out_free_fs;
