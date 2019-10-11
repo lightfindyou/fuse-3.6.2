@@ -361,7 +361,7 @@ static int list_empty(const struct list_head *head)
 {
 	return head->next == head;
 }
-
+//Add new to the position between prev and next.
 static void list_add(struct list_head *new, struct list_head *prev,
 		     struct list_head *next)
 {
@@ -375,7 +375,7 @@ static inline void list_add_head(struct list_head *new, struct list_head *head)
 {
 	list_add(new, head, head->next);
 }
-
+//Add new to the tail of head.
 static inline void list_add_tail(struct list_head *new, struct list_head *head)
 {
 	list_add(new, head->prev, head);
@@ -409,7 +409,7 @@ static size_t get_node_size(struct fuse *f)
 }
 
 #ifdef FUSE_NODE_SLAB
-static struct node_slab *list_to_slab(struct list_head *head)
+static struct node_slab *list_to_slab(struct list_head *head)	//Change one pointer to another kind of pointer.
 {
 	return (struct node_slab *) head;
 }
@@ -418,7 +418,7 @@ static struct node_slab *node_to_slab(struct fuse *f, struct node *node)
 {
 	return (struct node_slab *) (((uintptr_t) node) & ~((uintptr_t) f->pagesize - 1));
 }
-
+//Allocate a memory space whose size is pagesize, initialize the first space as nodeslab, the other as node_slab->freelist(type list_head), add the slab->list to f->partial_slabs.
 static int alloc_slab(struct fuse *f)
 {
 	void *mem;
@@ -428,9 +428,9 @@ static int alloc_slab(struct fuse *f)
 	size_t i;
 	size_t node_size = get_node_size(f);
 
-	mem = mmap(NULL, f->pagesize, PROT_READ | PROT_WRITE,
-		   MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-
+	mem = mmap(NULL, f->pagesize, PROT_READ | PROT_WRITE,	//Short for protect_read etc.
+		   MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);	/* Changes are not visible to other process or the underlying file; the map is not backed by any file.
+		   										 	MAP_ANONYMOUS　also means the content are initilized to 0 */
 	if (mem == MAP_FAILED)
 		return -1;
 
@@ -439,7 +439,7 @@ static int alloc_slab(struct fuse *f)
 	slab->used = 0;
 	num = (f->pagesize - sizeof(struct node_slab)) / node_size;
 
-	start = (char *) mem + f->pagesize - num * node_size;
+	start = (char *) mem + f->pagesize - num * node_size;	//Just the position after node_slab.
 	for (i = 0; i < num; i++) {
 		struct list_head *n;
 
@@ -450,24 +450,24 @@ static int alloc_slab(struct fuse *f)
 
 	return 0;
 }
-
+//Don't understand.
 static struct node *alloc_node(struct fuse *f)
 {
 	struct node_slab *slab;
 	struct list_head *node;
 
 	if (list_empty(&f->partial_slabs)) {
-		int res = alloc_slab(f);
+		int res = alloc_slab(f);	//Allocate a memory space whose size is pagesize, initialize the first space as nodeslab, the other as node_slab->freelist(type list_head), add the slab->list to f->partial_slabs.
 		if (res != 0)
 			return NULL;
 	}
-	slab = list_to_slab(f->partial_slabs.next);
-	slab->used++;
+	slab = list_to_slab(f->partial_slabs.next);	//The pointer allocated just now, just change the pointer type.
+	slab->used++;	//Understand: why here can use slab, it's default value is 0.
 	node = slab->freelist.next;
 	list_del(node);
-	if (list_empty(&slab->freelist)) {
-		list_del(&slab->list);
-		list_add_tail(&slab->list, &f->full_slabs);
+	if (list_empty(&slab->freelist)) {	//Understand: what does the function means? If freelist is empty.
+		list_del(&slab->list);	//delete slab->list's head.
+		list_add_tail(&slab->list, &f->full_slabs);	//Add slab->list's new head to f->full_slabs.
 	}
 	memset(node, 0, sizeof(struct node));
 
@@ -676,12 +676,12 @@ static void rehash_id(struct fuse *f)
 	if (t->split == t->size / 2)
 		node_table_resize(t);
 }
-
+//Add node to the f->id_table.array[].
 static void hash_id(struct fuse *f, struct node *node)
 {
-	size_t hash = id_hash(f, node->nodeid);
-	node->id_next = f->id_table.array[hash];
-	f->id_table.array[hash] = node;
+	size_t hash = id_hash(f, node->nodeid);	//Get the hash of id.
+	node->id_next = f->id_table.array[hash];	//Add it to the hash table.
+	f->id_table.array[hash] = node;	//Refresh the header.
 	f->id_table.use++;
 
 	if (f->id_table.use >= f->id_table.size / 2)
@@ -4703,17 +4703,17 @@ void fuse_lib_help(struct fuse_args *args)
 }
 
 				      
-
+//Understand: Don't understand.
 static int fuse_init_intr_signal(int signum, int *installed)
 {
 	struct sigaction old_sa;
 
-	if (sigaction(signum, NULL, &old_sa) == -1) {
+	if (sigaction(signum, NULL, &old_sa) == -1) {	// Get and/or set the action for signal SIG.
 		perror("fuse: cannot get old signal handler");
 		return -1;
 	}
 
-	if (old_sa.sa_handler == SIG_DFL) {
+	if (old_sa.sa_handler == SIG_DFL) {	//If old_sa.sa_handler is default action.
 		struct sigaction sa;
 
 		memset(&sa, 0, sizeof(struct sigaction));
@@ -4825,7 +4825,7 @@ void fuse_stop_cleanup_thread(struct fuse *f)
 	}
 }
 
-
+//Get a new fuse and initialize it's content.
 FUSE_SYMVER(".symver fuse_new_31,fuse_new@@FUSE_3.1");
 struct fuse *fuse_new_31(struct fuse_args *args,
 		      const struct fuse_operations *op,
@@ -4941,7 +4941,7 @@ struct fuse *fuse_new_31(struct fuse_args *args,
 		init_list_head(&lnode->lru);
 	}
 
-	strcpy(root->inline_name, "/");
+	strcpy(root->inline_name, "/");	//Copy '/' to root->inline_name.
 	root->name = root->inline_name;
 
 	if (f->conf.intr &&
@@ -4952,7 +4952,7 @@ struct fuse *fuse_new_31(struct fuse_args *args,
 	root->parent = NULL;
 	root->nodeid = FUSE_ROOT_ID;
 	inc_nlookup(root);
-	hash_id(f, root);
+	hash_id(f, root);	//Add root to the f->id_table.array[] by hash.
 
 	return f;
 

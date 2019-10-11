@@ -205,8 +205,8 @@ int fuse_parse_cmdline(struct fuse_args *args,
 	memset(opts, 0, sizeof(struct fuse_cmdline_opts));
 
 	opts->max_idle_threads = 10;	//Here set the max idle threads.
-
-	if (fuse_opt_parse(args, opts, fuse_helper_opts,	//For every args->argv, copy the data matching with the fuse_helper_opts into opts + fuse_helper_opt->offset, '--xxx' type arg to args.
+	//For every args->argv, copy the data matching with the fuse_helper_opts into opts + fuse_helper_opt->offset, '--xxx' type arg to args.
+	if (fuse_opt_parse(args, opts, fuse_helper_opts,
 			   fuse_helper_opt_proc) == -1)
 		return -1;
 
@@ -312,7 +312,7 @@ int fuse_main_real(int argc, char *argv[], const struct fuse_operations *op,
 		goto out1;
 	}
 
-
+	//Get a new fuse and it's content is initialized.
 	fuse = fuse_new_31(&args, op, op_size, user_data);
 	if (fuse == NULL) {
 		res = 3;
