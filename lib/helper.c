@@ -323,7 +323,7 @@ int fuse_main_real(int argc, char *argv[], const struct fuse_operations *op,
 		res = 4;
 		goto out2;
 	}
-	
+	//So, after this, this process is killed and  the new chile process continue to execute.
 	if (fuse_daemonize(opts.foreground) != 0) {	//Understand: what is function of the code?
 		res = 5;
 		goto out3;

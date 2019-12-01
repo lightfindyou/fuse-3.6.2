@@ -2475,7 +2475,7 @@ void fuse_session_process_buf(struct fuse_session *se,
 
 void fuse_session_process_buf_int(struct fuse_session *se,
 				  const struct fuse_buf *buf, struct fuse_chan *ch)
-{
+{	//Understand: For every single request, it use such many allocate, could we reduce the cost?
 	const size_t write_header_size = sizeof(struct fuse_in_header) +
 		sizeof(struct fuse_write_in);
 	struct fuse_bufvec bufv = { .buf[0] = *buf, .count = 1 };
@@ -2529,7 +2529,7 @@ void fuse_session_process_buf_int(struct fuse_session *se,
 		fuse_send_msg(se, ch, &iov, 1);
 		goto clear_pipe;
 	}
-
+	//Understand: How does the in parameter construct like this, is it a default struct set by kernel moudle?
 	req->unique = in->unique;
 	req->ctx.uid = in->uid;
 	req->ctx.gid = in->gid;
@@ -2597,7 +2597,7 @@ void fuse_session_process_buf_int(struct fuse_session *se,
 		do_write_buf(req, in->nodeid, inarg, buf);
 	else if (in->opcode == FUSE_NOTIFY_REPLY)
 		do_notify_reply(req, in->nodeid, inarg, buf);
-	else
+	else	//Here call the function write by the user.
 		fuse_ll_ops[in->opcode].func(req, in->nodeid, inarg);
 
 out_free:
