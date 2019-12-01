@@ -221,7 +221,7 @@ int fuse_parse_cmdline(struct fuse_args *args,
 	return 0;
 }
 
-
+//Understand: what is function of the code?
 int fuse_daemonize(int foreground)
 {
 	if (!foreground) {
@@ -238,13 +238,13 @@ int fuse_daemonize(int foreground)
 		 * demonize current process by forking it and killing the
 		 * parent.  This makes current process as a child of 'init'.
 		 */
-		switch(fork()) {
+		switch(fork()) {	//On success, the PID of the child process is returned in the parent, and 0  is  returned  in the  child.   On  failure,  -1  is returned in the parent, no child process is created, and errno is set appropriately.
 		case -1:
 			perror("fuse_daemonize: fork");
 			return -1;
 		case 0:
 			break;
-		default:
+		default:	//Kill the parent process, so the child is zombie process?
 			(void) read(waiter[0], &completed, sizeof(completed));
 			_exit(0);
 		}
@@ -323,8 +323,8 @@ int fuse_main_real(int argc, char *argv[], const struct fuse_operations *op,
 		res = 4;
 		goto out2;
 	}
-
-	if (fuse_daemonize(opts.foreground) != 0) {
+	
+	if (fuse_daemonize(opts.foreground) != 0) {	//Understand: what is function of the code?
 		res = 5;
 		goto out3;
 	}

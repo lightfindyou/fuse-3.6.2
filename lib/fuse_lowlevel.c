@@ -2701,7 +2701,7 @@ int fuse_session_receive_buf_int(struct fuse_session *se, struct fuse_buf *buf,
 		if (llp->size < bufsize)
 			goto fallback;
 	}
-
+	//Here use the splice to reduce kernal-context switch.
 	res = splice(ch ? ch->fd : se->fd,
 		     NULL, llp->pipe[1], NULL, bufsize, 0);
 	err = errno;
@@ -2926,7 +2926,7 @@ int fuse_session_mount(struct fuse_session *se, const char *mountpoint)
 	 * Make sure file descriptors 0, 1 and 2 are open, otherwise chaos
 	 * would ensue.
 	 */
-	do {
+	do {	//Understand: why close fd? How is fd number assigned and when will the loop stop?
 		fd = open("/dev/null", O_RDWR);
 		if (fd > 2)
 			close(fd);

@@ -4738,7 +4738,7 @@ static void fuse_restore_intr_signal(int signum)
 	sigaction(signum, &sa, NULL);
 }
 
-//Use module to construct fuse_fs and set it as f->fs.
+//Use module to construct fuse_fs and set the newfs it as f->fs.
 static int fuse_push_module(struct fuse *f, const char *module,
 			    struct fuse_args *args)
 {
@@ -4780,7 +4780,7 @@ struct fuse_fs *fuse_fs_new(const struct fuse_operations *op, size_t op_size,
 		memcpy(&fs->op, op, op_size);
 	return fs;
 }
-
+//init node_table size, mainly allocate the t->array struct size.
 static int node_table_init(struct node_table *t)
 {
 	t->size = NODE_TABLE_MIN_SIZE;
@@ -4884,7 +4884,7 @@ struct fuse *fuse_new_31(struct fuse_args *args,
 	init_list_head(&f->partial_slabs);
 	init_list_head(&f->full_slabs);
 	init_list_head(&f->lru_table);
-
+	//Construct every module in f->conf.moudles and add the new constructed newfs to f->fs.
 	if (f->conf.modules) {
 		char *module;
 		char *next;
@@ -4895,7 +4895,7 @@ struct fuse *fuse_new_31(struct fuse_args *args,
 			next = *p ? p + 1 : NULL;
 			*p = '\0';
 			if (module[0] &&	//If module[0] is NOT NULL and unable to use module to construct fuse_fs.
-			    fuse_push_module(f, module, args) == -1)	//Here construct new fuse_fs with moudle->factory and set as f->fs.
+			    fuse_push_module(f, module, args) == -1)	//Here construct new fuse_fs with moudle->factory and set the newfs as f->fs.
 				goto out_free_fs;
 		}
 	}
@@ -4929,7 +4929,7 @@ struct fuse *fuse_new_31(struct fuse_args *args,
 	if (node_table_init(&f->id_table) == -1)
 		goto out_free_name_table;
 
-	fuse_mutex_init(&f->lock);
+	fuse_mutex_init(&f->lock);	//Init lock, system call.
 
 	root = alloc_node(f);
 	if (root == NULL) {
@@ -4943,7 +4943,7 @@ struct fuse *fuse_new_31(struct fuse_args *args,
 
 	strcpy(root->inline_name, "/");	//Copy '/' to root->inline_name.
 	root->name = root->inline_name;
-
+	//If interrupt is enabled, init the intertupt handler.
 	if (f->conf.intr &&
 	    fuse_init_intr_signal(f->conf.intr_signal,
 				  &f->intr_installed) == -1)
